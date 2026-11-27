@@ -139,10 +139,17 @@ Tutaj trójkąt traktujemy jak krótką sekwencję złożoną z **3 tokenów**, 
 
 ### Pairwise Relation Network (sieć relacyjna)
 
-Model zaprojektowany bezpośrednio pod logikę algorytmu Rivara, który w praktyce sprowadza się do sprawdzania nierówności parami (czy krawędź A jest dłuższa lub równa krawędzi B oraz C).
+Model zaprojektowany bezpośrednio pod logikę algorytmu Rivara, który w praktyce sprowadza się do sprawdzania nierówności parami — krawędź $i$ wygrywa, jeśli jest dłuższa lub równa pozostałym dwóm bokom ($L_i \ge L_j$ dla $j \neq i$), z uwzględnieniem priorytetu brzegu przy remisach.
 
-- **Jak to działa:** Po zamianie każdej z trzech krawędzi na wektor cech ukrytych, zestawiamy je w **pojedynki 1 na 1** (krawędź 1 z 2, krawędź 1 z 3 itd.). Współdzielona sieć relacyjna bierze parę krawędzi oraz różnicę między nimi i ocenia, która z nich powinna wygrać. Na koniec sumujemy punkty zdobyte przez każdą krawędź we wszystkich jej starciach - ta z najwyższym wynikiem zostaje wybrana do podziału.
-- **Plusy i minusy:** Najbardziej dosłowne przełożenie reguł matematycznych na strukturę sieci, co ułatwia jej szybkie nauczenie się porównywania długości i priorytetów brzegowych.
+- **Jak to działa:**
+  1. **Kodowanie krawędzi:** Najpierw każdą z trzech krawędzi przepuszczamy przez tę samą małą sieć $\phi$, dostając trzy wektory ukryte: $z_i = \phi(e_i)$ dla $i \in \{1, 2, 3\}$.
+  2. **Pojedynki $1$ na $1$:** Zamiast wrzucać wszystko naraz, zestawiamy krawędzie parami. Dla każdej pary $(i, j)$ wrzucamy do współdzielonej sieci relacyjnej $g$ oba wektory oraz ich różnicę:
+     $$r_{ij} = g\big([z_i \,\|\, z_j \,\|\, z_i - z_j]\big)$$
+     Jawne podanie różnicy $z_i - z_j$ daje sieci bezpośredni sygnał do porównania — działa jak wyuczony odpowiednik sprawdzenia $L_i - L_j$ oraz przewagi flagi brzegowej $b_i - b_j$.
+  3. **Zliczenie punktów:** Końcowy wynik (logit) dla krawędzi $i$ to po prostu suma punktów zdobytych w starciach z pozostałymi dwoma bokami:
+     $$s_i = \sum_{j \neq i} r_{ij}$$
+     Krawędź z najwyższym wynikiem $s_i$ zostaje wybrana do podziału.
+- **Plusy i minusy:** Najbardziej dosłowne przełożenie reguł matematycznych na strukturę sieci, co ułatwia jej szybkie nauczenie się porównywania długości i priorytetów brzegowych. Ponieważ dodawanie jest przemienne, suma po $j \neq i$ gwarantuje pełną odporność na kolejność podania krawędzi, a przy zaledwie $3$ bokach mamy tylko $6$ par do policzenia, więc model pozostaje bardzo lekki.
 
 ### Podsumowanie kandydatów
 
